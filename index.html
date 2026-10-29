@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CVAuto Studio | Générateur de CV & Lettres de Motivation Automatique</title>
+  <meta name="description" content="Créez et générez des CV et lettres de motivation professionnels automatiquement en 1 clic. Modèles modernes, score ATS en direct et export PDF haute qualité.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Polices Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- html2pdf.js pour export direct -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Confetti Canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Feuille de styles personnalisée et règles Print A4 -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="h-full flex flex-col overflow-hidden bg-slate-950 font-jakarta text-slate-100">
+
+  <!-- ========================================================================
+       BARRE SUPÉRIEURE (NAVIGATION & CONTRÔLES RAPIDES)
+       ======================================================================== -->
+  <header id="app-header" class="no-print h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 flex-shrink-0">
+    <!-- Logo & Titre -->
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+        <i class="fa-solid fa-wand-magic-sparkles text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">CVAuto<span class="text-blue-400">Studio</span></span>
+          <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            AUTO-GÉNÉRATION
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">CV & Lettres de motivation professionnels en 1 clic</p>
+      </div>
+    </div>
+
+    <!-- Actions du milieu : Générer en 1 clic, Onglets Document & Modèles -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Bouton Génération Magique 1 Clic -->
+      <button type="button" onclick="openModal('modal-profiles')" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+        <i class="fa-solid fa-bolt text-yellow-300 animate-pulse"></i>
+        <span>Générer en 1 clic</span>
+      </button>
+
+      <!-- Onglet Switcher : CV vs Lettre de motivation -->
+      <div class="hidden lg:flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 text-xs">
+        <button type="button" id="tab-mode-cv" onclick="switchAppMode('cv')" class="px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white transition-all flex items-center gap-1.5">
+          <i class="fa-solid fa-file-lines"></i>
+          <span>Mon CV</span>
+        </button>
+        <button type="button" id="tab-mode-letter" onclick="switchAppMode('letter')" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
+          <i class="fa-solid fa-envelope-open-text"></i>
+          <span>Lettre de motivation</span>
+        </button>
+      </div>
+
+      <!-- Sélecteur de Modèle de CV -->
+      <div id="template-selector-wrapper" class="hidden md:flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
+        <span class="text-[11px] font-medium text-slate-400 pl-2 pr-1">Modèle :</span>
+        <select id="select-template" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+          <option value="modern">Moderne Minimaliste</option>
+          <option value="executive">Exécutif Dual-Tone</option>
+          <option value="creative">Tech & Créatif</option>
+          <option value="ats">ATS Robot-Friendly</option>
+          <option value="prestige">Prestige & Suisse</option>
+        </select>
+      </div>
+
+      <!-- Palette de couleurs d'accent -->
+      <div class="hidden xl:flex items-center gap-1.5 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700/80">
+        <span class="text-[11px] font-medium text-slate-400 px-1">Couleur :</span>
+        <div id="color-palette-buttons" class="flex items-center gap-1.5">
+          <!-- Injecté par JavaScript -->
+        </div>
+        <input type="color" id="custom-color-picker" title="Couleur personnalisée" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 ml-1">
+      </div>
+    </div>
+
+    <!-- Actions de droite : Télécharger & Options -->
+    <div class="flex items-center gap-2">
+      <!-- Sélecteur Vue Mobile (Éditeur vs Aperçu) -->
+      <div class="flex md:hidden bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
+        <button type="button" id="tab-btn-editor" onclick="switchMobileTab('editor')" class="px-2.5 py-1 rounded-md font-semibold bg-blue-600 text-white">Éditer</button>
+        <button type="button" id="tab-btn-preview" onclick="switchMobileTab('preview')" class="px-2.5 py-1 rounded-md font-semibold text-slate-400">Aperçu</button>
+      </div>
+
+      <!-- Menu Sauvegarder & Importer -->
+      <div class="relative group">
+        <button type="button" class="p-2 sm:px-3 sm:py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors">
+          <i class="fa-solid fa-floppy-disk text-slate-400"></i>
+          <span class="hidden lg:inline">Fichier</span>
+          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+        </button>
+        <div class="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1.5 hidden group-hover:block z-50">
+          <button type="button" onclick="exportJson()" class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-700/80 flex items-center gap-2.5">
+            <i class="fa-solid fa-download text-blue-400"></i> Exporter mes données (JSON)
+          </button>
+          <label class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-700/80 flex items-center gap-2.5 cursor-pointer">
+            <i class="fa-solid fa-upload text-emerald-400"></i> Importer un fichier (JSON)
+            <input type="file" accept=".json" onchange="importJson(this)" class="hidden">
+          </label>
+          <div class="h-px bg-slate-700 my-1"></div>
+          <button type="button" onclick="resetCv()" class="w-full text-left px-3.5 py-2 text-xs text-red-400 hover:bg-red-950/40 flex items-center gap-2.5">
+            <i class="fa-solid fa-rotate-left"></i> Réinitialiser tout
+          </button>
+        </div>
+      </div>
+
+      <!-- Bouton Télécharger PDF -->
+      <div class="flex items-center">
+        <button type="button" onclick="downloadPdfDirect()" class="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-l-xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>Télécharger PDF</span>
+        </button>
+        <button type="button" onclick="exportPdf()" title="Imprimer ou enregistrer en PDF via le navigateur" class="px-2.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-r-xl border-l border-emerald-500/40 text-xs sm:text-sm">
+          <i class="fa-solid fa-print"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       CORPS PRINCIPAL SPLIT SCREEN
+       ======================================================================== -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- ======================================================================
+         PANNEAU GAUCHE : ÉDITEUR DYNAMIQUE
+         ====================================================================== -->
+    <aside id="editor-panel" class="w-full md:w-1/2 lg:w-[48%] xl:w-[42%] flex flex-col bg-slate-900/90 border-r border-slate-800 overflow-y-auto z-10 transition-all">
+      <div class="p-4 sm:p-6 space-y-5">
+
+        <!-- Switcher CV / Lettre sur mobile / tablette -->
+        <div class="flex lg:hidden bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs">
+          <button type="button" onclick="switchAppMode('cv')" class="flex-1 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-file-lines"></i> Mon CV
+          </button>
+          <button type="button" onclick="switchAppMode('letter')" class="flex-1 py-1.5 rounded-lg font-bold text-slate-400 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-envelope-open-text"></i> Lettre de motivation
+          </button>
+        </div>
+
+        <!-- SECTION CV : SCORE ATS & CONSEILS -->
+        <div id="cv-editor-sections" class="space-y-5">
+          <!-- Carte Score de Qualité & ATS -->
+          <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </span>
+                <div>
+                  <h3 class="text-xs font-bold text-white uppercase tracking-wider">Score ATS & Recruteur</h3>
+                  <p class="text-[11px] text-slate-400">Lisibilité par les algorithmes de recrutement</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="ats-score-badge" class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-900/60 text-emerald-300 border border-emerald-500/30">
+                  Calcul...
+                </span>
+                <span id="ats-score-value" class="text-base font-black text-white">0%</span>
+              </div>
+            </div>
+
+            <div class="w-full bg-slate-700/60 h-2 rounded-full overflow-hidden mb-3">
+              <div id="ats-score-bar" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: 50%;"></div>
+            </div>
+
+            <ul id="ats-tips-container" class="space-y-1 pt-1">
+              <!-- Injecté en JS -->
+            </ul>
+          </div>
+
+          <!-- Outils rapides d'ajustement -->
+          <div class="grid grid-cols-2 gap-3 bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Typographie</label>
+              <select id="select-font" class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="font-jakarta">Plus Jakarta Sans (Moderne)</option>
+                <option value="font-inter">Inter (Clair & Tech)</option>
+                <option value="font-poppins">Poppins (Dynamique)</option>
+                <option value="font-merriweather">Merriweather (Sérif Élégant)</option>
+                <option value="font-roboto">Roboto (Classique)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Espacement / Densité</label>
+              <select id="select-density" class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="density-compact">Compact (Idéal 1 page)</option>
+                <option value="density-normal" selected>Normal (Équilibré)</option>
+                <option value="density-spacious">Aéré (Espacé)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ACCORDÉONS DU CV -->
+          <div class="space-y-3">
+            <!-- 1. INFORMATIONS PERSONNELLES -->
+            <details class="group bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden transition-all" open>
+              <summary class="flex items-center justify-between p-4 cursor-pointer select-none bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-id-card text-blue-400 text-sm"></i>
+                  <span>Informations Personnelles</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180 text-xs"></i>
+              </summary>
+
+              <div class="p-4 space-y-4 border-t border-slate-700/60">
+                <!-- Photo de Profil avec suggestions rapides -->
+                <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
+                  <div class="flex items-center gap-4">
+                    <img id="photo-preview-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="Avatar" class="w-14 h-14 rounded-full object-cover border-2 border-slate-600 flex-shrink-0">
+                    <div class="flex-1 space-y-1.5">
+                      <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-200">Photo de profil</label>
+                        <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300">
+                          <input type="checkbox" id="toggle-show-photo" checked class="rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0">
+                          <span>Afficher sur le CV</span>
+                        </label>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <label class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 rounded-lg text-xs cursor-pointer flex items-center gap-1.5 transition-colors">
+                          <i class="fa-solid fa-cloud-arrow-up"></i>
+                          <span>Téléverser</span>
+                          <input type="file" id="photo-file-input" accept="image/*" class="hidden">
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pastilles d'avatars pré-sélectionnés en 1 clic -->
+                  <div class="pt-2 border-t border-slate-800/80">
+                    <span class="text-[10px] text-slate-400 block mb-1.5">Ou choisir un modèle professionnel :</span>
+                    <div class="flex items-center gap-2">
+                      <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-blue-400 hover:scale-105 transition-all">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                      </button>
+                      <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-blue-400 hover:scale-105 transition-all">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                      </button>
+                      <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-blue-400 hover:scale-105 transition-all">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                      </button>
+                      <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-blue-400 hover:scale-105 transition-all">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Prénom</label>
+                    <input type="text" id="personal-firstname" placeholder="Ex: Thomas" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Nom</label>
+                    <input type="text" id="personal-lastname" placeholder="Ex: Martin" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-300 mb-1">Intitulé du poste / Métier visé</label>
+                  <input type="text" id="personal-jobtitle" placeholder="Ex: Développeur Web Full Stack Senior" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Email</label>
+                    <input type="email" id="personal-email" placeholder="nom@example.fr" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Téléphone</label>
+                    <input type="text" id="personal-phone" placeholder="+33 6 12 34 56 78" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Ville, Pays</label>
+                    <input type="text" id="personal-city" placeholder="Paris, France" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">LinkedIn</label>
+                    <input type="text" id="personal-linkedin" placeholder="linkedin.com/in/profil" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">GitHub / Portfolio</label>
+                    <input type="text" id="personal-github" placeholder="github.com/pseudo" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Site Web</label>
+                    <input type="text" id="personal-website" placeholder="monsite.fr" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- 2. RÉSUMÉ PROFESSIONNEL / ACCROCHE -->
+            <details class="group bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden transition-all" open>
+              <summary class="flex items-center justify-between p-4 cursor-pointer select-none bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-quote-left text-indigo-400 text-sm"></i>
+                  <span>Accroche / Profil Professionnel</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180 text-xs"></i>
+              </summary>
+
+              <div class="p-4 space-y-2.5 border-t border-slate-700/60">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] text-slate-400">Présentez brièvement vos atouts majeurs.</span>
+                  <button type="button" onclick="openAiSummaryModal()" class="text-xs px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 rounded-lg flex items-center gap-1.5 transition-colors">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Générer avec l'IA</span>
+                  </button>
+                </div>
+                <textarea id="personal-summary" rows="4" placeholder="Ex: Développeur Full Stack passionné avec 6 ans d'expérience..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+              </div>
+            </details>
+
+            <!-- 3. EXPÉRIENCES PROFESSIONNELLES -->
+            <details class="group bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden transition-all" open>
+              <summary class="flex items-center justify-between p-4 cursor-pointer select-none bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-briefcase text-emerald-400 text-sm"></i>
+                  <span>Expériences Professionnelles</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180 text-xs"></i>
+              </summary>
+
+              <div class="p-4 space-y-4 border-t border-slate-700/60">
+                <div id="experiences-container" class="space-y-4">
+                  <!-- Injecté par JavaScript -->
+                </div>
+                <button type="button" onclick="addExperience()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-dashed border-slate-600 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition-colors">
+                  <i class="fa-solid fa-plus text-emerald-400"></i>
+                  <span>Ajouter une expérience</span>
+                </button>
+              </div>
+            </details>
+
+            <!-- 4. FORMATIONS & DIPLÔMES -->
+            <details class="group bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden transition-all">
+              <summary class="flex items-center justify-between p-4 cursor-pointer select-none bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-graduation-cap text-amber-400 text-sm"></i>
+                  <span>Formations & Diplômes</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180 text-xs"></i>
+              </summary>
+
+              <div class="p-4 space-y-4 border-t border-slate-700/60">
+                <div id="education-container" class="space-y-4">
+                  <!-- Injecté par JavaScript -->
+                </div>
+                <button type="button" onclick="addEducation()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-dashed border-slate-600 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition-colors">
+                  <i class="fa-solid fa-plus text-amber-400"></i>
+                  <span>Ajouter une formation</span>
+                </button>
+              </div>
+            </details>
+
+            <!-- 5. COMPÉTENCES (SKILLS) -->
+            <details class="group bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden transition-all">
+              <summary class="flex items-center justify-between p-4 cursor-pointer select-none bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-bolt text-yellow-400 text-sm"></i>
+                  <span>Compétences & Outils</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180 text-xs"></i>
+              </summary>
+
+              <div class="p-4 space-y-3 border-t border-slate-700/60">
+                <div id="skills-container" class="space-y-2">
+                  <!-- Injecté par JavaScript -->
+                </div>
+                <button type="button" onclick="addSkill()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-dashed border-slate-600 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition-colors">
+                  <i class="fa-solid fa-plus text-yellow-400"></i>
+                  <span>Ajouter une compétence</span>
+                </button>
+              </div>
+            </details>
+
+            <!-- 6. LANGUES & CENTRES D'INTÉRÊT -->
+            <details class="group bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden transition-all">
+              <summary class="flex items-center justify-between p-4 cursor-pointer select-none bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-language text-cyan-400 text-sm"></i>
+                  <span>Langues & Centres d'intérêt</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180 text-xs"></i>
+              </summary>
+
+              <div class="p-4 space-y-4 border-t border-slate-700/60">
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Langues maîtrisées</label>
+                  <div id="languages-container" class="space-y-2 mb-2">
+                    <!-- Injecté par JavaScript -->
+                  </div>
+                  <button type="button" onclick="addLanguage()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 border border-dashed border-slate-600 rounded-lg text-xs font-medium text-slate-300 flex items-center justify-center gap-1.5 transition-colors">
+                    <i class="fa-solid fa-plus text-cyan-400"></i>
+                    <span>Ajouter une langue</span>
+                  </button>
+                </div>
+
+                <div class="pt-2 border-t border-slate-700/60">
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Centres d'intérêt / Passions</label>
+                  <p class="text-[11px] text-slate-400 mb-2">Séparez chaque passion par une virgule.</p>
+                  <input type="text" id="personal-interests" placeholder="Ex: Course à pied, Open Source, Guitare..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- SECTION ÉDITEUR LETTRE DE MOTIVATION (Affiché en mode Lettre) -->
+        <div id="letter-editor-sections" class="hidden space-y-4">
+          <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-envelope-open-text text-blue-400"></i>
+                <span>Modèles de lettres en 1 clic</span>
+              </h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button type="button" onclick="loadLetterPreset('candidature_spontanee')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left text-xs transition-colors">
+                <div class="font-bold text-white mb-0.5">Spontanée</div>
+                <div class="text-[10px] text-slate-400">Prospection ciblée</div>
+              </button>
+              <button type="button" onclick="loadLetterPreset('reponse_offre')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left text-xs transition-colors">
+                <div class="font-bold text-white mb-0.5">Réponse Offre</div>
+                <div class="text-[10px] text-slate-400">Annonce précise</div>
+              </button>
+              <button type="button" onclick="loadLetterPreset('stage_alternance')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left text-xs transition-colors">
+                <div class="font-bold text-white mb-0.5">Stage / Alternance</div>
+                <div class="text-[10px] text-slate-400">Étudiant & Débutant</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Champs de la lettre -->
+          <div class="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Destinataire (Entreprise / RH / Adresse)</label>
+              <textarea id="letter-recipient" rows="3" placeholder="Direction des Ressources Humaines&#10;Entreprise Cible&#10;75008 Paris" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Objet de la lettre</label>
+              <input type="text" id="letter-subject" placeholder="Candidature pour le poste de..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Corps de la lettre</label>
+              <textarea id="letter-body" rows="12" placeholder="Madame, Monsieur,..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 leading-relaxed font-sans"></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ======================================================================
+         PANNEAU DROIT : APERÇU EN DIRECT DU DOCUMENT SUR PAGE A4
+         ====================================================================== -->
+    <main id="preview-panel" class="hidden md:flex flex-1 flex-col bg-slate-950 overflow-hidden relative">
+
+      <!-- Barre d'outils au-dessus de la feuille A4 -->
+      <div id="preview-toolbar" class="no-print h-12 bg-slate-900/80 border-b border-slate-800/80 px-4 sm:px-6 flex items-center justify-between z-10 flex-shrink-0">
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <i class="fa-solid fa-file-lines text-blue-400"></i>
+          <span class="font-semibold text-slate-300">Format Papier A4 Standard</span>
+          <span class="text-slate-600 hidden sm:inline">•</span>
+          <span class="hidden sm:inline">210mm × 297mm</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Bouton Calibrer pour 1 page -->
+          <button type="button" onclick="autoFitOnePage()" title="Optimise l'espacement pour tenir sur une seule page A4" class="px-2.5 py-1 bg-slate-800 hover:bg-blue-600/30 hover:border-blue-500/50 border border-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+            <i class="fa-solid fa-compress text-blue-400"></i>
+            <span class="hidden sm:inline">Tenir sur 1 page</span>
+          </button>
+
+          <!-- Toggle Ligne de coupure de page -->
+          <button type="button" onclick="togglePageLimitLine()" title="Afficher/masquer l'indicateur de fin de première page" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors">
+            <i class="fa-solid fa-ruler-horizontal text-amber-400"></i>
+            <span class="hidden lg:inline">Repère Page 1</span>
+          </button>
+
+          <!-- Contrôles de zoom -->
+          <div class="flex items-center gap-1 bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/60">
+            <button type="button" onclick="zoomOut()" class="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white rounded hover:bg-slate-700 transition-colors" title="Zoom -">
+              <i class="fa-solid fa-minus text-[11px]"></i>
+            </button>
+            <span id="zoom-level-text" class="text-xs font-bold text-slate-300 px-1.5 select-none">100%</span>
+            <button type="button" onclick="zoomIn()" class="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white rounded hover:bg-slate-700 transition-colors" title="Zoom +">
+              <i class="fa-solid fa-plus text-[11px]"></i>
+            </button>
+            <button type="button" onclick="zoomReset()" class="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white rounded hover:bg-slate-700 transition-colors" title="Réinitialiser zoom">
+              <i class="fa-solid fa-rotate text-[11px]"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteneur défilant de la feuille A4 -->
+      <div class="a4-container-wrapper flex-1">
+        <div id="cv-preview-page" class="a4-page font-jakarta density-normal show-page-line">
+          <!-- Injecté dynamiquement par js/templates.js -->
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================================================
+       MODALES (ASSISTANT AUTOMATIQUE, IA, SÉLECTIONS)
+       ======================================================================== -->
+
+  <!-- Modal 1 : 10 Profils automatiques en 1 clic -->
+  <div id="modal-profiles" class="modal-overlay hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <i class="fa-solid fa-bolt text-yellow-300"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Générer un profil complet en 1 clic</h3>
+            <p class="text-xs text-slate-400">10 profils métiers rédigés par des experts et prêts à l'emploi</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('modal-profiles')" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[65vh] overflow-y-auto pr-1">
+        <!-- 1. Dev Full Stack -->
+        <button type="button" onclick="loadPredefinedProfile('dev_fullstack')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-blue-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-code"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Développeur Full Stack</h4>
+              <span class="text-[10px] text-blue-400 font-medium">Tech & Développement</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Senior 6 ans d'expérience. React, Node.js, AWS, microservices.</p>
+        </button>
+
+        <!-- 2. Marketing -->
+        <button type="button" onclick="loadPredefinedProfile('marketing')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-indigo-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-chart-line"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Responsable Marketing Digital</h4>
+              <span class="text-[10px] text-indigo-400 font-medium">Growth & Acquisition</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Acquisition multicanale, SEO/SEA, Inbound, ROI publicitaire.</p>
+        </button>
+
+        <!-- 3. Data Analyst -->
+        <button type="button" onclick="loadPredefinedProfile('data_analyst')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-emerald-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-database"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Data Analyst & BI</h4>
+              <span class="text-[10px] text-emerald-400 font-medium">Data & Décisionnel</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Dashboards Power BI, SQL avancé, Python Pandas, pipelines ETL.</p>
+        </button>
+
+        <!-- 4. Chef de Projet -->
+        <button type="button" onclick="loadPredefinedProfile('chef_projet')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-amber-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-list-check"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Chef de Projet & Scrum Master</h4>
+              <span class="text-[10px] text-amber-400 font-medium">Agile & Management</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Certifié PSM & PMP, budgets de 850k€, coordination d'équipes.</p>
+        </button>
+
+        <!-- 5. UX/UI Designer -->
+        <button type="button" onclick="loadPredefinedProfile('ux_ui')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-pink-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-pen-nib"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Product Designer UX / UI</h4>
+              <span class="text-[10px] text-pink-400 font-medium">Design & Recherche</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Design Systems Figma, tests utilisateurs, accessibilité RGAA.</p>
+        </button>
+
+        <!-- 6. Commercial B2B -->
+        <button type="button" onclick="loadPredefinedProfile('commercial')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-cyan-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-handshake"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Ingénieur Commercial B2B</h4>
+              <span class="text-[10px] text-cyan-400 font-medium">Vente & Grands Comptes</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Portefeuille 2.4M€, closing de contrats cadres, prospection ciblée.</p>
+        </button>
+
+        <!-- 7. Comptable -->
+        <button type="button" onclick="loadPredefinedProfile('comptable')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-teal-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-calculator"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Responsable Comptable</h4>
+              <span class="text-[10px] text-teal-400 font-medium">Finance & Gestion</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Diplômée DSCG, clôtures fiscales, trésorerie, Sage & SAP.</p>
+        </button>
+
+        <!-- 8. Juriste -->
+        <button type="button" onclick="loadPredefinedProfile('juriste')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-red-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-scale-balanced"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Juriste d'Affaires & Contrats</h4>
+              <span class="text-[10px] text-red-400 font-medium">Droit & Conformité</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Contrats internationaux, conformité RGPD, gestion précontentieux.</p>
+        </button>
+
+        <!-- 9. Santé / Infirmière -->
+        <button type="button" onclick="loadPredefinedProfile('sante')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-rose-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-user-nurse"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Infirmière Diplômée d'État</h4>
+              <span class="text-[10px] text-rose-400 font-medium">Santé & Urgences</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Urgences hospitalières, réanimation, gestes critiques, AFGSU 2.</p>
+        </button>
+
+        <!-- 10. Étudiante / Stage -->
+        <button type="button" onclick="loadPredefinedProfile('etudiant')" class="text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-purple-500 transition-all group">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-user-graduate"></i>
+            </span>
+            <div>
+              <h4 class="text-xs font-bold text-white">Étudiante Master 2 / Stage</h4>
+              <span class="text-[10px] text-purple-400 font-medium">Jeune Diplômé & RH</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Recrutement des talents, dynamisme, alternance préalable.</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2 : Assistant IA de Résumé / Accroche -->
+  <div id="modal-ai-summary" class="modal-overlay hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+          <h3 class="text-base font-bold text-white">Générateur d'accroches professionnelles</h3>
+        </div>
+        <button type="button" onclick="closeModal('modal-ai-summary')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <button type="button" onclick="renderSummarySuggestions('tech')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Tech & Dév</button>
+        <button type="button" onclick="renderSummarySuggestions('marketing')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Marketing</button>
+        <button type="button" onclick="renderSummarySuggestions('management')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Management</button>
+        <button type="button" onclick="renderSummarySuggestions('finance')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Finance & Compta</button>
+        <button type="button" onclick="renderSummarySuggestions('etudiant')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Étudiant / Stage</button>
+      </div>
+
+      <div id="ai-summary-suggestions" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+        <!-- Suggestions injectées dynamiquement -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3 : Bibliothèque de puces de missions -->
+  <div id="modal-bullets" class="modal-overlay hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-blue-400"></i>
+          <h3 class="text-base font-bold text-white">Idées de réalisations chiffrées & verbes d'action</h3>
+        </div>
+        <button type="button" onclick="closeModal('modal-bullets')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <button type="button" onclick="renderBulletSuggestions('tech')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Tech & Web</button>
+        <button type="button" onclick="renderBulletSuggestions('management')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Gestion de Projet</button>
+        <button type="button" onclick="renderBulletSuggestions('marketing')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Marketing & Com</button>
+        <button type="button" onclick="renderBulletSuggestions('vente')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Commercial & Vente</button>
+        <button type="button" onclick="renderBulletSuggestions('finance')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Finance & Compta</button>
+      </div>
+
+      <div id="bullet-suggestions-list" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+        <!-- Puces injectées dynamiquement -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Flottant -->
+  <div id="toast-notification" class="notification-toast fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toast-text" class="text-xs font-semibold">Action réussie !</span>
+  </div>
+
+  <!-- Scripts applicatifs -->
+  <script src="js/data.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Script pour switch vue mobile -->
+  <script>
+    function switchMobileTab(tab) {
+      const editor = document.getElementById('editor-panel');
+      const preview = document.getElementById('preview-panel');
+      const btnEditor = document.getElementById('tab-btn-editor');
+      const btnPreview = document.getElementById('tab-btn-preview');
+
+      if (tab === 'editor') {
+        editor.classList.remove('hidden');
+        preview.classList.add('hidden');
+        btnEditor.classList.add('bg-blue-600', 'text-white');
+        btnEditor.classList.remove('text-slate-400');
+        btnPreview.classList.remove('bg-blue-600', 'text-white');
+        btnPreview.classList.add('text-slate-400');
+      } else {
+        editor.classList.add('hidden');
+        preview.classList.remove('hidden');
+        btnPreview.classList.add('bg-blue-600', 'text-white');
+        btnPreview.classList.remove('text-slate-400');
+        btnEditor.classList.remove('bg-blue-600', 'text-white');
+        btnEditor.classList.add('text-slate-400');
+      }
+    }
+  </script>
+</body>
+</html>

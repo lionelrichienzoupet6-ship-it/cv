@@ -1,0 +1,210 @@
+/* ==========================================================================
+   CVAuto Studio - Stylesheet & A4 Print Engine
+   ========================================================================== */
+
+/* Polices personnalisées */
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+.font-poppins { font-family: 'Poppins', sans-serif; }
+.font-roboto { font-family: 'Roboto', sans-serif; }
+.font-merriweather { font-family: 'Merriweather', serif; }
+
+/* Variables dynamiques de thème */
+:root {
+  --primary-color: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #dbeafe;
+  --text-main: #1f2937;
+  --text-muted: #4b5563;
+  --border-color: #e5e7eb;
+  --bg-subtle: #f9fafb;
+}
+
+/* Base styling */
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #1e293b;
+  background-color: #0f172a;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* ==========================================================================
+   A4 Resume Paper Dimensions & Preview Canvas
+   ========================================================================== */
+.a4-container-wrapper {
+  perspective: 1000px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1.5rem;
+}
+
+/* Page A4 réelle : 210mm x 297mm */
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: #ffffff;
+  color: #1f2937;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  transform-origin: top center;
+  transition: transform 0.2s ease, width 0.2s ease;
+  overflow: hidden;
+}
+
+/* Ligne indicatrice de fin de page 1 (297mm) en mode preview */
+.page-limit-line {
+  display: none;
+  position: absolute;
+  top: 297mm;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #ef4444, #ef4444 6px, transparent 6px, transparent 12px);
+  z-index: 40;
+  pointer-events: none;
+}
+.page-limit-badge {
+  display: none;
+  position: absolute;
+  top: calc(297mm - 24px);
+  right: 12px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 41;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.show-page-line .page-limit-line,
+.show-page-line .page-limit-badge {
+  display: block;
+}
+
+/* ==========================================================================
+   Densité de contenu (Compact, Normal, Aéré)
+   ========================================================================== */
+.density-compact .cv-section {
+  margin-bottom: 0.7rem;
+}
+.density-compact .cv-item {
+  margin-bottom: 0.45rem;
+}
+.density-compact p, .density-compact li {
+  line-height: 1.35;
+  font-size: 0.8125rem;
+}
+
+.density-normal .cv-section {
+  margin-bottom: 1.15rem;
+}
+.density-normal .cv-item {
+  margin-bottom: 0.75rem;
+}
+.density-normal p, .density-normal li {
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+.density-spacious .cv-section {
+  margin-bottom: 1.6rem;
+}
+.density-spacious .cv-item {
+  margin-bottom: 1rem;
+}
+.density-spacious p, .density-spacious li {
+  line-height: 1.65;
+  font-size: 0.925rem;
+}
+
+/* Progress bar pour les compétences */
+.skill-bar-fill {
+  background-color: var(--primary-color);
+  transition: width 0.4s ease;
+}
+
+/* Timeline bullet */
+.timeline-bullet {
+  border-color: var(--primary-color);
+}
+
+/* Éviter la coupure des blocs d'expérience lors de l'impression */
+.cv-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* ==========================================================================
+   MODE IMPRESSION & EXPORT PDF (Natif haute fidélité)
+   ========================================================================== */
+@media print {
+  html, body {
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Cacher absolument toute l'interface de l'application */
+  .no-print,
+  #app-header,
+  #editor-panel,
+  #preview-toolbar,
+  .page-limit-line,
+  .page-limit-badge,
+  .modal-overlay,
+  .notification-toast,
+  button {
+    display: none !important;
+  }
+
+  /* Positionner la page de CV directement en plein format */
+  .a4-container-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .a4-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0mm;
+  }
+}
